@@ -10,6 +10,11 @@ locals {
   rds_security_group_id = join("", aws_security_group.this.*.id)
 
   name = "aurora-${var.name}"
+
+  common_tags = merge(var.tags, {
+    "ModuleSourceRepo" = "github.com/StratusGrid/terraform-aws-rds-aurora"
+  })
+
 }
 
 # Random string to use as master password unless one is specified
@@ -27,7 +32,7 @@ resource "aws_db_subnet_group" "this" {
   description = "For Aurora cluster ${var.name}"
   subnet_ids  = var.subnets
 
-  tags = merge(var.tags, {
+  tags = merge(local.common_tags, {
     Name = local.name
   })
 }
@@ -79,7 +84,7 @@ resource "aws_rds_cluster" "this" {
     }
   }
 
-  tags = var.tags
+  tags = local.common_tags
 }
 
 resource "aws_rds_cluster_instance" "this" {
@@ -111,7 +116,7 @@ resource "aws_rds_cluster_instance" "this" {
     ]
   }
 
-  tags = var.tags
+  tags = local.common_tags
 }
 
 resource "random_id" "snapshot_identifier" {
@@ -143,7 +148,7 @@ resource "aws_iam_role" "rds_enhanced_monitoring" {
 
   permissions_boundary = var.permissions_boundary
 
-  tags = merge(var.tags, {
+  tags = merge(local.common_tags, {
     Name = local.name
   })
 }
@@ -195,7 +200,7 @@ resource "aws_security_group" "this" {
 
   description = var.security_group_description == "" ? "Control traffic to/from RDS Aurora ${var.name}" : var.security_group_description
 
-  tags = merge(var.tags, {
+  tags = merge(local.common_tags, {
     Name = local.name
   })
 }
